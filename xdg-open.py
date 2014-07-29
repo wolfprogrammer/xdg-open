@@ -24,7 +24,7 @@ import os
 import sys
 import re
 
-from subprocess import call, Popen
+from subprocess import Popen
 
 HOME = os.path.expanduser('~')
 userconfig = os.path.join(HOME, '.xdgrc')
@@ -80,97 +80,8 @@ wiriter_mimes = wiriter_mimes.split(';')
 presentation_mimes = presentation_mimes.split(';')
 
 
-def open_console(shell_command):
-    """
-    Execute bash command in a new
-    console.
-
-    """
-    #print shell_command
-
-    # Unique filename
-    tmpfile = "/tmp/tmpscript_34f0195c-1759-11e4-a995-6466b326b337.sh"
-
-    tmpscript =\
-    """
-    #! /bin/bash
-    $@
-    sleep 1
-    /bin/bash
-    """
-    open(tmpfile,"w").write(tmpscript)
-    os.chmod(tmpfile, 0777)
-
-    cmd= ["lxterminal", "-e", tmpfile, shell_command]
-    #cmd= ["gnome-terminal", "-x", tmpfile, shell_command]
-
-    #print " ".join(cmd)
-
-    Popen(cmd)
 
 
-def filehandler(filename):
-
-    import magic
-
-    compressed_format = ('.tgz', '.gz', '.bz2', '.tar', '.tar.gz', '.tar.bz2', '.zip', '.rar', '.7z', '.jar')
-
-    magic = magic.from_file(filename, mime=True)
-
-    #magic.from_file("win7-desktop.py", mime=True)
-
-    #basename = os.path.basename(filename)
-
-    if os.path.isdir(filename):
-        Popen([handlers['FILEMANAGER'], filename])
-
-
-    # BINARY EXECUTABLES
-    #------------------------------
-    elif filename.endswith('.exe'):
-        Popen(['wine', filename])
-
-    elif filename.endswith('.msi'):
-        Popen(['msiexec', '/i', filename])
-
-    elif filename.endswith('.egg'):
-        Popen(['python', filename])
-
-    elif filename.endswith('.deb'):
-        Popen(['gdebi', filename])
-
-    elif magic == 'application/pdf':
-        Popen([handlers['PDF'], filename])
-
-    elif magic ==  "text/html":
-        Popen([handlers['BROWSER'], filename])
-
-    #  TEXT FILE
-    #--------------------------------
-    elif magic.startswith('text'):
-        Popen([handlers['EDITOR'], filename])
-
-    # MULTIMEDIA
-    #-------------------------------------
-    elif magic.startswith('image'):
-        Popen([handlers['IMAGE'], filename])
-
-    elif magic.startswith('video'):
-        Popen([handlers['VIDEO'], filename])
-
-    elif magic.startswith('audio'):
-        Popen([handlers['AUDIO'], filename])
-
-    # OFFICE DOCUMENTS, doc, presentation, spreadsheet
-    #--------------------------------------
-    elif magic in spreadsheet_mimes:
-        Popen([handlers['SPREADSHEET'], filename])
-
-    elif magic in wiriter_mimes:
-        Popen([handlers['WRITER'], filename])
-
-    elif magic in presentation_mimes:
-        Popen([handlers['PRESENTATION'], filename])
 
 def main():
 
@@ -260,6 +171,100 @@ def main():
     else:
         print "File Handler"
         filehandler(uri)
+
+
+def filehandler(filename):
+
+    import magic
+
+    compressed_format = ('.tgz', '.gz', '.bz2', '.tar', '.tar.gz', '.tar.bz2', '.zip', '.rar', '.7z', '.jar')
+
+    magic = magic.from_file(filename, mime=True)
+
+    #magic.from_file("win7-desktop.py", mime=True)
+
+    #basename = os.path.basename(filename)
+
+    if os.path.isdir(filename):
+        Popen([handlers['FILEMANAGER'], filename])
+
+
+    # BINARY EXECUTABLES
+    #------------------------------
+    elif filename.endswith('.exe'):
+        Popen(['wine', filename])
+
+    elif filename.endswith('.msi'):
+        Popen(['msiexec', '/i', filename])
+
+    elif filename.endswith('.egg'):
+        Popen(['python', filename])
+
+    elif filename.endswith('.deb'):
+        Popen(['gdebi', filename])
+
+    elif magic == 'application/pdf':
+        Popen([handlers['PDF'], filename])
+
+    elif magic ==  "text/html":
+        Popen([handlers['BROWSER'], filename])
+
+    #  TEXT FILE
+    #--------------------------------
+    elif magic.startswith('text'):
+        Popen([handlers['EDITOR'], filename])
+
+    # MULTIMEDIA
+    #-------------------------------------
+    elif magic.startswith('image'):
+        Popen([handlers['IMAGE'], filename])
+
+    elif magic.startswith('video'):
+        Popen([handlers['VIDEO'], filename])
+
+    elif magic.startswith('audio'):
+        Popen([handlers['AUDIO'], filename])
+
+    # OFFICE DOCUMENTS, doc, presentation, spreadsheet
+    #--------------------------------------
+    elif magic in spreadsheet_mimes:
+        Popen([handlers['SPREADSHEET'], filename])
+
+    elif magic in wiriter_mimes:
+        Popen([handlers['WRITER'], filename])
+
+    elif magic in presentation_mimes:
+        Popen([handlers['PRESENTATION'], filename])
+
+
+
+def open_console(shell_command):
+    """
+    Execute bash command in a new
+    console.
+
+    """
+    #print shell_command
+
+    # Unique filename
+    tmpfile = "/tmp/tmpscript_34f0195c-1759-11e4-a995-6466b326b337.sh"
+
+    tmpscript =\
+    """
+    #! /bin/bash
+    $@
+    sleep 1
+    /bin/bash
+    """
+    open(tmpfile,"w").write(tmpscript)
+    os.chmod(tmpfile, 0777)
+
+    cmd= ["lxterminal", "-e", tmpfile, shell_command]
+    #cmd= ["gnome-terminal", "-x", tmpfile, shell_command]
+
+    #print " ".join(cmd)
+
+    Popen(cmd)
 
 
 main()
