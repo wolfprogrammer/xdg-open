@@ -1,49 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-http://en.wikipedia.org/wiki/URI_scheme
+XDG-OPEN Replacement
 
-sftp://[<user>[;fingerprint=<host-key fingerprint>]@]<host>[:<port>]/<path>/<file>
+This new xdg-open python scripts replaces the old /usr/bin/xdg-open
 
+Features:
+    1. Easy to customize and modify
+    2. Support to new protocols like smb://, ftp://, ssh://, telnet://, file://,
 
-WINDOWS SMB/ SAMBA
+    3. Supports Special Protocols Like
+    Geo Location geo://<latitude>,<longitude>,z=<zoom>,t=<map type: m,k,h,p>
+    Executable   command://<path to executable>
+    Deep Web     tor://<url.onion>
+    Jar file     jar:<path-to-jar-file>
 
-    IETF Draft 	smb://[<user>@]<host>[:<port>][/[<path>]][?<param1>=<value1>[;<param2>=<value2>]] or
-    smb://[<user>@]<workgroup>[:<port>][/] or
-    smb://[[<domain>;]<username>[:<password>]@]<server>[:<port>][/[<share>[/[<path>]]][?[<param>=<value>[<param2>=<value2>[...]]]]][5]
-    example:
-    smb://workgroup;user:password@server/share/folder/file.txt
-
-    smb://server/printer
-    smb://workgroup/server/printer
-    smb://username:password@server/printer
-    smb://username:password@workgroup/server/printer
-
-
-TELEPHONE Number
-tel:<phonenumber>
-
-
-telnet://<user>:<password>@<host>[:<port>/]
-
-rsync://<host>[:<port>]/<path>
-
-
-feed:<absolute_uri> or
-feed://<hierarchical part>
-
-examples:
-feed://example.com/rss.xml
-feed:https://example.com/rss.xml
-
-
-  apt:<package name>
-
-GEO URI
-geo:37.786971,-122.399677
-http://developer.android.com/guide/components/intents-common.html
-http://geosms.wordpress.com/
-
+    4. All configuration can be done by editing /etc/xdgrc
 
 """
 
@@ -192,7 +164,7 @@ elif geo_url.match(uri):
         z= "z=%s&" % zoom
     else:
         z= ""
-        
+
     if map_type:
         t= "t=%s&" % map_type
     else:
@@ -200,6 +172,12 @@ elif geo_url.match(uri):
 
     url = "https://www.google.com/local?%s%sq=%s,%s" % (z, t, lat, lon)
     Popen([handlers['BROWSER'], url])
+
+#Execute Command
+elif re.match("command://.*", uri):
+    cmd = uri.split('command://')[1]
+    cmd = cmd.split()
+    Popen(cmd)
 
 #JAR FILE
 elif re.match('jar:.*', uri):
