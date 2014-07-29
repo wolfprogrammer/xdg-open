@@ -27,7 +27,7 @@ PDFMANAGER:     ---
 IMAGE:          gpicview
 VIDEO:          vlc
 
-# OFFICE
+# KINGSOFT OFFICE
 SPREADSHEET:    /usr/bin/et
 WRITER:         /usr/bin/wps
 PRESENTATION:   /usr/bin/wpp

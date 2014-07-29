@@ -80,6 +80,34 @@ wiriter_mimes = wiriter_mimes.split(';')
 presentation_mimes = presentation_mimes.split(';')
 
 
+def open_console(shell_command):
+    """
+    Execute bash command in a new
+    console.
+
+    """
+    #print shell_command
+
+    # Unique filename
+    tmpfile = "/tmp/tmpscript_34f0195c-1759-11e4-a995-6466b326b337.sh"
+
+    tmpscript =\
+    """
+    #! /bin/bash
+    $@
+    sleep 1
+    /bin/bash
+    """
+    open(tmpfile,"w").write(tmpscript)
+    os.chmod(tmpfile, 0777)
+
+    cmd= ["lxterminal", "-e", tmpfile, shell_command]
+    #cmd= ["gnome-terminal", "-x", tmpfile, shell_command]
+
+    #print " ".join(cmd)
+
+    Popen(cmd)
+
 
 def filehandler(filename):
 
@@ -144,85 +172,94 @@ def filehandler(filename):
     elif magic in presentation_mimes:
         Popen([handlers['PRESENTATION'], filename])
 
+def main():
 
-# ONION URL
-if onion_url:
-    print onion_url
-    url = onion_url[0][1]
-    url = re.sub('.onion', '.tor2web.org', url)
-    Popen([handlers['BROWSER'], url])
-elif re.match('tor://.*', uri):
-    url = uri.split('tor://')[1]
-    url = re.sub('.onion', '.tor2web.org', url)
-    Popen([handlers['BROWSER'], url])
+    # ONION URL
+    if onion_url:
+        print onion_url
+        url = onion_url[0][1]
+        url = re.sub('.onion', '.tor2web.org', url)
+        Popen([handlers['BROWSER'], url])
+    elif re.match('tor://.*', uri):
+        url = uri.split('tor://')[1]
+        url = re.sub('.onion', '.tor2web.org', url)
+        Popen([handlers['BROWSER'], url])
 
-# GEOLOCATION
-elif geo_url.match(uri):
+    # GEOLOCATION
+    elif geo_url.match(uri):
 
-    lat, lon, zoom, map_type = geo_url.findall(uri)[0]
-    if zoom:
-        z= "z=%s&" % zoom
+        lat, lon, zoom, map_type = geo_url.findall(uri)[0]
+        if zoom:
+            z= "z=%s&" % zoom
+        else:
+            z= ""
+
+        if map_type:
+            t= "t=%s&" % map_type
+        else:
+            t= ""
+
+        url = "https://www.google.com/local?%s%sq=%s,%s" % (z, t, lat, lon)
+        Popen([handlers['BROWSER'], url])
+
+    #Execute Command
+    elif re.match("command://.*", uri):
+        cmd = uri.split('command://')[1]
+        cmd = cmd.split()
+        Popen(cmd)
+
+    #Execute on Console
+    elif re.match("""console://.*""", uri):
+        cmd = uri.split('console://')[1]
+        open_console(cmd)
+
+    #JAR FILE
+    elif re.match('jar:.*', uri):
+        Popen(['java', '-jar', uri.split('jar:')[1]])
+
+    # WEB PAGE
+    elif re.match('http://.*', uri) or re.match('www\..*', uri):
+        Popen([handlers['BROWSER'], uri])
+
+    # MAGNET LINK
+    elif torrent_url:
+        Popen([handlers['TORRENT'], uri])
+
+    # SSH
+    elif re.match('ssh://.*', uri):
+        Popen([handlers['SSH'], uri.split('ssh://')[1]])
+
+    # TELNET
+    elif re.match('telnet://.*', uri):
+        Popen(['telnet', uri])
+
+
+    # SFTP
+    elif re.match('sftp://.*', uri):
+        Popen([handlers['SFTP'], uri])
+
+    #FTP
+    elif re.match('ftp://.*', uri):
+        Popen([handlers['FTP'], uri])
+
+    #SMB
+    elif re.match('smb://.*', uri):
+        Popen([handlers['SMB'], uri])
+
+    elif re.match('\\.*', uri):
+        Popen([handlers['SMB'], uri])
+
+
+    #MAILTO
+    elif re.match('mailto://.*', uri):
+        Popen([handlers['MAILTO'], uri])
+
+    elif file_url:
+        filehandler(file_url)
+
     else:
-        z= ""
-
-    if map_type:
-        t= "t=%s&" % map_type
-    else:
-        t= ""
-
-    url = "https://www.google.com/local?%s%sq=%s,%s" % (z, t, lat, lon)
-    Popen([handlers['BROWSER'], url])
-
-#Execute Command
-elif re.match("command://.*", uri):
-    cmd = uri.split('command://')[1]
-    cmd = cmd.split()
-    Popen(cmd)
-
-#JAR FILE
-elif re.match('jar:.*', uri):
-    Popen(['java', '-jar', uri.split('jar:')[1]])
-
-# WEB PAGE
-elif re.match('http://.*', uri) or re.match('www\..*', uri):
-    Popen([handlers['BROWSER'], uri])
-
-# MAGNET LINK
-elif torrent_url:
-    Popen([handlers['TORRENT'], uri])
-
-# SSH
-elif re.match('ssh://.*', uri):
-    Popen([handlers['SSH'], uri.split('ssh://')[1]])
-
-# TELNET
-elif re.match('telnet://.*', uri):
-    Popen(['telnet', uri])
+        print "File Handler"
+        filehandler(uri)
 
 
-# SFTP
-elif re.match('sftp://.*', uri):
-    Popen([handlers['SFTP'], uri])
-
-#FTP
-elif re.match('ftp://.*', uri):
-    Popen([handlers['FTP'], uri])
-
-#SMB
-elif re.match('smb://.*', uri):
-    Popen([handlers['SMB'], uri])
-
-elif re.match('\\.*', uri):
-    Popen([handlers['SMB'], uri])
-
-
-#MAILTO
-elif re.match('mailto://.*', uri):
-    Popen([handlers['MAILTO'], uri])
-
-elif file_url:
-    filehandler(file_url)
-
-else:
-    print "File Handler"
-    filehandler(uri)
+main()
