@@ -1,0 +1,18 @@
+BROWSER:        firefox
+TORRENT:        transmission-gtk
+FILEMANAGER:    pcmanfm
+
+TOR:            torbrowser
+BTC:            bitcoin
+
+TEXTEDITOR:     gedit
+
+SSH:            ssh
+SFTP:           pcmanfm
+FTP:            pcmanfm
+SMB:            pcmanfm
+
+
+PICTURES:       ---
+OFFICE:         ---
+PDFMANAGER:     ---
