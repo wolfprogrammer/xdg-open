@@ -1,6 +1,10 @@
 BROWSER:        firefox
 TORRENT:        transmission-gtk
+
 FILEMANAGER:    pcmanfm
+ARCHIVEMANAGER: ark
+
+EDITOR:         geany
 
 TOR:            torbrowser
 BTC:            bitcoin
@@ -12,7 +16,18 @@ SFTP:           pcmanfm
 FTP:            pcmanfm
 SMB:            pcmanfm
 
+PDF:            evince
+
+MAILTO:         email
 
 PICTURES:       ---
 OFFICE:         ---
 PDFMANAGER:     ---
+
+IMAGE:          gpicview
+VIDEO:          vlc
+
+# OFFICE
+SPREADSHEET:    /usr/bin/et
+WRITER:         /usr/bin/wps
+PRESENTATION:   /usr/bin/wpp

@@ -52,12 +52,12 @@ HOME = os.path.expanduser('~')
 userconfig = os.path.join(HOME, '.xdgrc')
 
 
-handlers_conf = open('xdgrc','r').read()
+handlers_conf = open('/etc/xdgrc','r').read()
 _handlers = re.findall('(.*)\s*:\s*(.*)\s*', handlers_conf)
 apps = [a[0] for a in _handlers]
 cmd  = [a[1] for a in _handlers]
 handlers = dict(zip(apps, cmd))
-print handlers
+#print handlers
 
 
 
@@ -87,8 +87,76 @@ onion_url    = re.findall("(http://|https://)(.*\.onion.*)", uri)
 
 print "\n\n"
 
+
+spreadsheet_mimes = "application/wps-office.et;application/wps-office.ett;application/wps-office.xls;application/wps-office.xlt;application/vnd.ms-excel;application/msexcel;application/x-msexcel;application/wps-office.xlsx;application/wps-office.xltx"
+wiriter_mimes = "application/wps-office.wps;application/wps-office.wpt;application/wps-office.doc;application/wps-office.dot;application/vnd.ms-word;application/msword;application/x-msword;application/msword-template;application/wps-office.docx;application/wps-office.dotx;application/rtf"
+presentation_mimes = "application/wps-office.dps;application/wps-office.dpt;application/wps-office.ppt;application/wps-office.pot;application/vnd.ms-powerpoint;application/vnd.mspowerpoint;application/mspowerpoint;application/powerpoint;application/x-mspowerpoint;application/wps-office.pptx;application/wps-office.potx"
+
+spreadsheet_mimes =  spreadsheet_mimes.split(';')
+wiriter_mimes = wiriter_mimes.split(';')
+presentation_mimes = presentation_mimes.split(';')
+
+
+
 def filehandler(filename):
-    pass
+
+    import magic
+
+    compressed_format = ('.tgz', '.gz', '.bz2', '.tar', '.tar.gz', '.tar.bz2', '.zip', '.rar', '.7z', '.jar')
+
+    magic = magic.from_file(filename, mime=True)
+
+    #magic.from_file("win7-desktop.py", mime=True)
+
+    #basename = os.path.basename(filename)
+
+    if os.path.isdir(filename):
+        Popen([handlers['FILEMANAGER'], filename])
+
+    # BINARY EXECUTABLES
+    #------------------------------
+    elif filename.endswith('.exe'):
+        Popen(['wine', filename])
+
+    elif filename.endswith('.msi'):
+        Popen(['msiexec', '/i', filename])
+
+    elif filename.endswith('.egg'):
+        Popen(['python', filename])
+
+    elif filename.endswith('.deb'):
+        Popen(['gdebi', filename])
+
+    elif magic == 'application/pdf':
+        Popen([handlers['PDF'], filename])
+
+    #  TEXT FILE
+    #--------------------------------
+    elif magic.startswith('text'):
+        Popen([handlers['EDITOR'], filename])
+
+    # MULTIMEDIA
+    #-------------------------------------
+    elif magic.startswith('image'):
+        Popen([handlers['IMAGE'], filename])
+
+    elif magic.startswith('video'):
+        Popen([handlers['VIDEO'], filename])
+
+    elif magic.startswith('audio'):
+        Popen([handlers['AUDIO'], filename])
+
+    # OFFICE DOCUMENTS, doc, presentation, spreadsheet
+    #--------------------------------------
+    elif magic in spreadsheet_mimes:
+        Popen([handlers['SPREADSHEET'], filename])
+
+    elif magic in wiriter_mimes:
+        Popen([handlers['WRITER'], filename])
+
+    elif magic in presentation_mimes:
+        Popen([handlers['PRESENTATION'], filename])
+
 
 # ONION URL
 if onion_url:
@@ -104,8 +172,9 @@ elif re.match("geo:(.*),(.*)", uri):
     url = "https://www.google.com/local?q=%s,%s" % (lat, lon)
     Popen([handlers['BROWSER'], url])
 
-    print lat
-    print lon
+#JAR FILE
+elif re.match('jar:.*', uri):
+    Popen(['java', '-jar', uri.split('jar:')[1]])
 
 # WEB PAGE
 elif re.match('http://.*', uri) or re.match('www\..*', uri):
@@ -118,6 +187,11 @@ elif torrent_url:
 # SSH
 elif re.match('ssh://.*', uri):
     Popen([handlers['SSH'], uri.split('ssh://')[1]])
+
+# TELNET
+elif re.match('telnet://.*', uri):
+    Popen(['telnet', uri])
+
 
 # SFTP
 elif re.match('sftp://.*', uri):
@@ -132,6 +206,15 @@ elif re.match('smb://.*', uri):
     Popen([handlers['SMB'], uri])
 
 
+
+#MAILTO
+elif re.match('mailto://.*', uri):
+    Popen([handlers['MAILTO'], uri])
+
+
 elif file_url:
     filehandler(file_url)
 
+else:
+    print "File Handler"
+    filehandler(uri)
