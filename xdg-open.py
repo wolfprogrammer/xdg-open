@@ -14,6 +14,12 @@ WINDOWS SMB/ SAMBA
     example:
     smb://workgroup;user:password@server/share/folder/file.txt
 
+    smb://server/printer
+    smb://workgroup/server/printer
+    smb://username:password@server/printer
+    smb://username:password@workgroup/server/printer
+
+
 TELEPHONE Number
 tel:<phonenumber>
 
@@ -85,7 +91,12 @@ ftp_url      = test_pattern('ftp://(.*)', uri)
 sftp_url     = test_pattern('sftp://(.*)', uri)
 onion_url    = re.findall("(http://|https://)(.*\.onion.*)", uri)
 
-print "\n\n"
+# match geo://8.003809,34.88922,z=20,t=h
+# Latitude: 8.003809
+# Longitude: 34.89922
+# zoom: 20 (maximum)
+# Hibryd map: h
+geo_url = re.compile("geo:(?://)?([-+]?\d*\.\d+|\d+),([-+]?\d*\.\d+|\d+)(?:,z=(\d+))?(?:,t=([m|k|h|p]))?")
 
 
 spreadsheet_mimes = "application/wps-office.et;application/wps-office.ett;application/wps-office.xls;application/wps-office.xlt;application/vnd.ms-excel;application/msexcel;application/x-msexcel;application/wps-office.xlsx;application/wps-office.xltx"
@@ -113,6 +124,7 @@ def filehandler(filename):
     if os.path.isdir(filename):
         Popen([handlers['FILEMANAGER'], filename])
 
+
     # BINARY EXECUTABLES
     #------------------------------
     elif filename.endswith('.exe'):
@@ -129,6 +141,9 @@ def filehandler(filename):
 
     elif magic == 'application/pdf':
         Popen([handlers['PDF'], filename])
+
+    elif magic ==  "text/html":
+        Popen([handlers['BROWSER'], filename])
 
     #  TEXT FILE
     #--------------------------------
@@ -164,12 +179,26 @@ if onion_url:
     url = onion_url[0][1]
     url = re.sub('.onion', '.tor2web.org', url)
     Popen([handlers['BROWSER'], url])
+elif re.match('tor://.*', uri):
+    url = uri.split('tor://')[1]
+    url = re.sub('.onion', '.tor2web.org', url)
+    Popen([handlers['BROWSER'], url])
 
 # GEOLOCATION
-elif re.match("geo:(.*),(.*)", uri):
+elif geo_url.match(uri):
 
-    lat, lon = re.findall("geo:(.*),(.*)", uri)[0]
-    url = "https://www.google.com/local?q=%s,%s" % (lat, lon)
+    lat, lon, zoom, map_type = geo_url.findall(uri)[0]
+    if zoom:
+        z= "z=%s&" % zoom
+    else:
+        z= ""
+        
+    if map_type:
+        t= "t=%s&" % map_type
+    else:
+        t= ""
+
+    url = "https://www.google.com/local?%s%sq=%s,%s" % (z, t, lat, lon)
     Popen([handlers['BROWSER'], url])
 
 #JAR FILE
@@ -205,12 +234,13 @@ elif re.match('ftp://.*', uri):
 elif re.match('smb://.*', uri):
     Popen([handlers['SMB'], uri])
 
+elif re.match('\\.*', uri):
+    Popen([handlers['SMB'], uri])
 
 
 #MAILTO
 elif re.match('mailto://.*', uri):
     Popen([handlers['MAILTO'], uri])
-
 
 elif file_url:
     filehandler(file_url)
