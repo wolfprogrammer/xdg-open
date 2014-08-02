@@ -20,6 +20,72 @@ Features:
 """
 
 
+import logging
+import logging.config
+
+LOG_SETTINGS = {
+    # --------- GENERAL OPTIONS ---------#
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    # ---------- LOGGERS ---------------#
+    'root': {
+        'level': 'NOTSET',
+        'handlers': ['file', 'console'],
+    },
+
+
+    #---------- HANDLERS ---------------#
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'INFO',
+            'formatter': 'detailed',
+            'stream': 'ext://sys.stdout',
+        },
+        'rotatingfile': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'NOTSET',
+            'formatter': 'detailed',
+            'filename': 'wifirotate.log',
+            'mode': 'a',
+            'maxBytes': 10485760,
+            'backupCount': 5,
+        },
+        'file':{
+            'class': 'logging.FileHandler',
+            'level': 'NOTSET',
+            'formatter': 'detailed',
+            'filename': 'wifi.log',
+            'mode': 'w',
+        },
+        'tcp' : {
+            'class' : 'logging.handlers.SocketHandler',
+            'level' :  'NOTSET',
+            'host'  :  '127.0.0.1',
+            'port'  :  9020,
+            'formatter': 'detailed',
+        },
+    },
+
+    # ----- FORMATTERS -----------------#
+    'formatters': {
+        'detailed': {
+            'format': '%(asctime)s %(module)-17s line:%(lineno)-4d %(funcName)s() ' \
+            '%(levelname)-8s %(message)s',
+        },
+        'email': {
+            'format': 'Timestamp: %(asctime)s\nModule: %(module)s\n' \
+            'Line: %(lineno)d\nMessage: %(message)s',
+        },
+    },
+}
+
+logging.config.dictConfig(LOG_SETTINGS)
+
+logger = logging.getLogger("root")
+
+
 import os
 import sys
 import re
@@ -177,6 +243,8 @@ def filehandler(filename):
 
     import magic
 
+    logger.info("filename = %s" % filename)
+
     compressed_format = ('.tgz', '.gz', '.bz2', '.tar', '.tar.gz', '.tar.bz2', '.zip', '.rar', '.7z', '.jar')
 
     magic = magic.from_file(filename, mime=True)
@@ -189,53 +257,69 @@ def filehandler(filename):
         Popen([handlers['FILEMANAGER'], filename])
 
 
+    elif filename.endswith(".desktop"):
+        logger.info("Executing desktop file")
+        execute_desktop(filename)
+
     # BINARY EXECUTABLES
     #------------------------------
     elif filename.endswith('.exe'):
+        logger.info("Executing exe file")
         Popen(['wine', filename])
 
     elif filename.endswith('.msi'):
+        logger.info("Executing msi file")
         Popen(['msiexec', '/i', filename])
 
     elif filename.endswith('.egg'):
+        logger.info("Executing python egg file")
         Popen(['python', filename])
 
     elif filename.endswith('.deb'):
+        logger.info("Installing a debian package")
         Popen(['gdebi', filename])
 
     elif magic == 'application/pdf':
+        logger.info("Open pdf file")
         Popen([handlers['PDF'], filename])
 
     elif magic ==  "text/html":
+        logger.info("Open html file")
         Popen([handlers['BROWSER'], filename])
 
     #  TEXT FILE
     #--------------------------------
     elif magic.startswith('text'):
+        logger.info("Found a text file")
         Popen([handlers['EDITOR'], filename])
 
     # MULTIMEDIA
     #-------------------------------------
     elif magic.startswith('image'):
+        logger.info("Found a image file")
         Popen([handlers['IMAGE'], filename])
 
     elif magic.startswith('video'):
+        logger.info("Found a video file")
         Popen([handlers['VIDEO'], filename])
 
     elif magic.startswith('audio'):
+        logger.info("Found a audio file")
         Popen([handlers['AUDIO'], filename])
 
     # OFFICE DOCUMENTS, doc, presentation, spreadsheet
     #--------------------------------------
     elif magic in spreadsheet_mimes:
+        logger.info("Found a spreadsheet file")
         Popen([handlers['SPREADSHEET'], filename])
 
     elif magic in wiriter_mimes:
+        logger.info("Found a microsoft word doc or *.odt")
         Popen([handlers['WRITER'], filename])
 
     elif magic in presentation_mimes:
+        logger.info("Found presentation")
         Popen([handlers['PRESENTATION'], filename])
-
 
 
 def open_console(shell_command):
@@ -265,6 +349,30 @@ def open_console(shell_command):
     #print " ".join(cmd)
 
     Popen(cmd)
+
+def execute_desktop(deskfile):
+    """
+    Parse a .desktop file and execute it
+    :param deskfile: (str) File with *.desktop extension
+    :return:
+    """
+    import re
+    import os
+    from subprocess import Popen
+
+    deskfile = os.path.expanduser(deskfile)
+    deskfile = os.path.expandvars(deskfile)
+
+    try:
+        data = open(deskfile, 'r').read()
+        cmd= re.findall('Exec=(.*)', data)[0]
+        #print cmd
+        Popen(cmd.split())
+        return True
+    except Exception as err:
+        logger.exception(err)
+        #print err
+        return False
 
 
 main()
