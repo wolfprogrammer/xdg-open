@@ -39,32 +39,16 @@ LOG_SETTINGS = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'level': 'INFO',
-            'formatter': 'detailed',
-            'stream': 'ext://sys.stdout',
-        },
-        'rotatingfile': {
-            'class': 'logging.handlers.RotatingFileHandler',
             'level': 'NOTSET',
             'formatter': 'detailed',
-            'filename': 'wifirotate.log',
-            'mode': 'a',
-            'maxBytes': 10485760,
-            'backupCount': 5,
+            'stream': 'ext://sys.stdout',
         },
         'file':{
             'class': 'logging.FileHandler',
             'level': 'NOTSET',
             'formatter': 'detailed',
-            'filename': 'wifi.log',
-            'mode': 'w',
-        },
-        'tcp' : {
-            'class' : 'logging.handlers.SocketHandler',
-            'level' :  'NOTSET',
-            'host'  :  '127.0.0.1',
-            'port'  :  9020,
-            'formatter': 'detailed',
+            'filename': '/tmp/xdg-open.log',
+            'mode': 'a',
         },
     },
 
@@ -73,10 +57,6 @@ LOG_SETTINGS = {
         'detailed': {
             'format': '%(asctime)s %(module)-17s line:%(lineno)-4d %(funcName)s() ' \
             '%(levelname)-8s %(message)s',
-        },
-        'email': {
-            'format': 'Timestamp: %(asctime)s\nModule: %(module)s\n' \
-            'Line: %(lineno)d\nMessage: %(message)s',
         },
     },
 }
@@ -103,13 +83,15 @@ cmd  = [a[1] for a in _handlers]
 handlers = dict(zip(apps, cmd))
 #print handlers
 
+logger.debug("apps = %s" % apps)
+logger.debug("cmd = %s" % cmd)
 
 
 if len(sys.argv) < 2:
     sys.exit(0)
 
 uri = sys.argv[1]
-
+logger.info("User input: uri = %s" % uri)
 
 def test_pattern(pattern, txt):
     import re
@@ -153,7 +135,8 @@ def main():
 
     # ONION URL
     if onion_url:
-        print onion_url
+        logger.info("Uri: Onion tor URL")
+
         url = onion_url[0][1]
         url = re.sub('.onion', '.tor2web.org', url)
         Popen([handlers['BROWSER'], url])
@@ -164,6 +147,7 @@ def main():
 
     # GEOLOCATION
     elif geo_url.match(uri):
+        logger.info("URI: Geolocation %s" % uri)
 
         lat, lon, zoom, map_type = geo_url.findall(uri)[0]
         if zoom:
@@ -181,29 +165,36 @@ def main():
 
     #Execute Command
     elif re.match("command://.*", uri):
+        logger.info("URI: Command: %s" % command)
         cmd = uri.split('command://')[1]
         cmd = cmd.split()
         Popen(cmd)
 
     #Execute on Console
     elif re.match("""console://.*""", uri):
+        logger.info("URI: console %s" % uri)
         cmd = uri.split('console://')[1]
         open_console(cmd)
 
     #JAR FILE
     elif re.match('jar:.*', uri):
+        logger.info("URI: jar - %s" % uri)
         Popen(['java', '-jar', uri.split('jar:')[1]])
 
     # WEB PAGE
     elif re.match('http://.*', uri) or re.match('www\..*', uri):
+        logger.info("URI: http: %s" % uri)
         Popen([handlers['BROWSER'], uri])
 
     # MAGNET LINK
     elif torrent_url:
+        logger.info("URI: magnet link/ torrent url")
+        logger.info("uri = %s" % uri)
         Popen([handlers['TORRENT'], uri])
 
     # SSH
     elif re.match('ssh://.*', uri):
+        logger.info("URI: ssh")
         Popen([handlers['SSH'], uri.split('ssh://')[1]])
 
     # TELNET
@@ -213,6 +204,7 @@ def main():
 
     # SFTP
     elif re.match('sftp://.*', uri):
+        logger.info("URI: sftp")
         Popen([handlers['SFTP'], uri])
 
     #FTP
@@ -221,6 +213,7 @@ def main():
 
     #SMB
     elif re.match('smb://.*', uri):
+        logger.info("URI smb: %S" % uri)
         Popen([handlers['SMB'], uri])
 
     elif re.match('\\.*', uri):
@@ -232,10 +225,11 @@ def main():
         Popen([handlers['MAILTO'], uri])
 
     elif file_url:
+        logger.warn("File URL")
         filehandler(file_url)
 
     else:
-        print "File Handler"
+        logger.warn("URI: file, file handler")
         filehandler(uri)
 
 
@@ -254,6 +248,7 @@ def filehandler(filename):
     #basename = os.path.basename(filename)
 
     if os.path.isdir(filename):
+        logger.info("Uri: directory path")
         Popen([handlers['FILEMANAGER'], filename])
 
 
